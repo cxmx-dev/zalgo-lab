@@ -1,0 +1,10 @@
+{
+  "name": "zalgo",
+  "zalgoCanonical": "index.html",
+  "engine": "src/lib/zalgo-engine.mjs",
+  "cli": "tools/zalgo.py",
+  "garbler": "tools/text-garbler/garbler.ps1",
+  "archive": "archive/html",
+  "template": "astro-minimal",
+  "notes": "Offline lab is index.html. Astro serves /lab and /demo."
+}

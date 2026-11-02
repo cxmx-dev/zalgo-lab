@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>∵∴ ZALGO BREACH — 9:16</title>
+    <style>body{margin:0;background:#000;overflow:hidden;height:100vh;display:flex;align-items:center;justify-content:center;}canvas{box-shadow:0 0 40px #0f0;}</style>
+</head>
+<body>
+    <canvas id="c" width="1080" height="1920"></canvas>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let time = 0;
+        const sigil = "∵∴";
+        function randZalgo() { return sigil + "̷̨̦̖̥͕̘̳̤̼̲͙̩̱̋̅ͫͨ̏̓͋͝͏̶̳̬̮̪͉̺̠̘̂͂ͬ͋̚͟".repeat(4); }
+        function draw() {
+            time += 0.07;
+            ctx.fillStyle = 'rgba(0,20,5,0.2)';
+            ctx.fillRect(0,0,1080,1920);
+            // Matrix rain
+            ctx.fillStyle = '#0a3';
+            for(let i=0;i<55;i++) ctx.fillText(randZalgo(), (time*40 + i*19)%1080, (time*110 + i*77)%2000-100);
+            // Terminal
+            ctx.strokeStyle = '#0f0'; ctx.lineWidth=12; ctx.strokeRect(60,820,960,920);
+            ctx.fillStyle='#001100'; ctx.fillRect(70,830,940,900);
+            ctx.font='bold 32px Courier New'; ctx.fillStyle='#f44';
+            for(let i=0;i<18;i++) ctx.fillText("∵∴ ERROR DIMENSION BREACH " + randZalgo().slice(0,28), 100, 880 + i*48);
+            // Logo Lockup
+            ctx.save();
+            ctx.translate(540, 480);
+            ctx.rotate(Math.sin(time*2)*0.04);
+            ctx.font = 'bold 220px Courier New';
+            ctx.fillStyle = '#fff';
+            ctx.shadowBlur = 80; ctx.shadowColor = '#0f0';
+            ctx.fillText(sigil, -ctx.measureText(sigil).width/2, 70);
+            ctx.fillStyle = '#ff0'; ctx.font = '120px Courier New';
+            ctx.fillText('**', -380, -40); ctx.fillText('**', 260, -40);
+            ctx.restore();
+            requestAnimationFrame(draw);
+        }
+        canvas.onclick = () => { ctx.fillStyle='rgba(255,80,80,0.6)'; ctx.fillRect(0,0,1080,1920); };
+        draw();
+    </script>
+</body>
+</html>

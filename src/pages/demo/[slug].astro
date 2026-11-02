@@ -1,0 +1,114 @@
+---
+import { getCollection, render } from 'astro:content';
+import Zalgo from '../../components/Zalgo.astro';
+import {
+  buildOutput,
+  createSeededRng,
+  charBack,
+  countCombiningMarks,
+} from '../../lib/zalgo-engine.mjs';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('promos');
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { title } = entry.data;
+const isMdx = entry.filePath?.endsWith('.mdx') ?? false;
+
+let Content;
+let corrupted = '';
+let sourceText = '';
+let charBackOnly: string | null = null;
+let markCount = 0;
+let metaLine = '';
+
+if (isMdx) {
+  ({ Content } = await render(entry));
+  metaLine = 'MDX · inline <Zalgo> components';
+} else {
+  const { zalgo } = entry.data;
+  if (!zalgo) {
+    throw new Error(`Promo "${entry.id}" is missing required zalgo frontmatter`);
+  }
+  sourceText = entry.body.trim();
+  const rng = zalgo.seed != null ? createSeededRng(zalgo.seed) : undefined;
+  corrupted = buildOutput(sourceText, zalgo.intensity, {
+    charBack: zalgo.charBack ?? false,
+    backWords: zalgo.backWords ?? false,
+    terminal: zalgo.terminal ?? false,
+    layerMode: zalgo.layerMode ?? 'reverse-then-zalgo',
+    bleedDecay: zalgo.bleedDecay ?? 0.3,
+    rng: rng ?? (() => 0.5),
+  });
+  charBackOnly = zalgo.charBack ? charBack(sourceText) : null;
+  markCount = countCombiningMarks(corrupted);
+  metaLine = `Build-time corruption · intensity ${zalgo.intensity}${zalgo.charBack ? ' · CHAR-BACK' : ''}${zalgo.seed != null ? ` · seed ${zalgo.seed}` : ''} · ${markCount} combining marks`;
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title} · Zalgo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0f0f0f;
+        color: #ddd;
+        max-width: 720px;
+        margin: 2rem auto;
+        padding: 0 1.5rem 2rem;
+        line-height: 1.55;
+      }
+      h1 { margin-bottom: 0.5rem; }
+      .meta { opacity: 0.65; font-size: 0.9rem; margin-bottom: 1.5rem; }
+      .panel {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 6px;
+      }
+      .panel h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55; margin: 0 0 0.5rem; }
+      .corrupted { font-size: 1.4em; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
+      .prose p { margin: 0.85rem 0; }
+      .prose :global(.zalgo-output) { margin: 1.25rem 0; }
+      a { color: #a78bfa; }
+      code { background: #222; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; }
+    </style>
+  </head>
+  <body>
+    <p><a href="/">← Zalgo</a></p>
+    <h1>{title}</h1>
+    <p class="meta">{metaLine}</p>
+
+    {isMdx ? (
+      <article class="prose" id="mdx-content">
+        <Content components={{ Zalgo }} />
+      </article>
+    ) : (
+      <>
+        <div class="panel">
+          <h2>Source (markdown body)</h2>
+          <p>{sourceText}</p>
+        </div>
+
+        {charBackOnly && (
+          <div class="panel">
+            <h2>CHAR-BACK transform (no marks)</h2>
+            <p>{charBackOnly}</p>
+          </div>
+        )}
+
+        <div class="panel">
+          <h2>Corrupted output (build-time)</h2>
+          <p class="corrupted" id="corrupted-output">{corrupted}</p>
+        </div>
+      </>
+    )}
+  </body>
+</html>

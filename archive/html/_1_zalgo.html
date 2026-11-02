@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zalgo Terminal Corruption</title>
+    <style>
+        body { background:#000; color:#0f0; font-family:'Courier New',monospace; margin:0; padding:20px; overflow:hidden; height:100vh; display:flex; flex-direction:column; }
+        #terminal { background:#111; border:2px solid #0f0; padding:15px; height:80vh; overflow-y:auto; box-shadow:0 0 20px #0f0; white-space:pre-wrap; font-size:14px; line-height:1.1; }
+        .prompt { color:#0ff; }
+        .glitch { animation:glitch 0.3s infinite; color:#f00; }
+        @keyframes glitch { 0%{transform:translate(0)} 20%{transform:translate(-2px,2px)} 40%{transform:translate(-2px,-2px)} 60%{transform:translate(2px,2px)} 80%{transform:translate(2px,-2px)} 100%{transform:translate(0)} }
+    </style>
+</head>
+<body>
+    <h1 style="color:#0f0;text-align:center;text-shadow:0 0 10px #0f0;">ZALGO TERMINAL v0.13 — DIMENSION BREACH ACTIVE</h1>
+    <div id="terminal"></div>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const zalgoBase = `]̷̨̦̖̥͕̘̳̤̼̲͙̩̱̋̅ͫͨ̏̓͋͝͏̶̳̬̮̪͉̺̠̘̂͂ͬ͋̚͟[]̷̷̨̦̖̥͕̘̳̤̼̲͙̩̱͊̋̅̅ͫͫͨ̏̓͋͏̶̵̳̬̮̪͉̺̠̘̂͂ͬ͋͒͑͌̽͋͒̎͛̾̍̑͋͛͒͗͛̾̈́̾͑͗͛͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́̚͟[]̷̨̦̖̥͕̘̳̤̼̲͙̩̱̋̅ͫͨ̏̓͋͝͏̶̳̬̮̪͉̺̠̘̂͂ͬ͋̚͟[]̷̨̦̖̥͕̘̳̤̼̲͙̩̱̋̅ͫͨ̏̓͋͝͏̶̳̬̮̪͉̺̠̘̂͂ͬ͋̚͟[[̶̠̘̺̪̮̬̳̂͂ͬ͋̚͟͏̷̨̱̩͙̲̼̤̳̘͕̥̖̦͋̓̏ͨͫ̅̋͝[`;
+
+        function addLine(text, className = '') {
+            const line = document.createElement('div');
+            if (className) line.className = className;
+            line.textContent = text;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function zalgoCorrupt(text) {
+            const chars = '̷̷̨̦̖̥͕̘̳̤̼̲͙̩̱͊̋̅̅ͫͫͨ̏̓͋͏̶̵̳̬̮̪͉̺̠̘̂͂ͬ͋͒͑͌̽͋͒̎͛̾̍̑͋͛͒͗͛̾̈́̾͑͗͛͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́̚͟';
+            return text.split('').map(char => Math.random() > 0.7 ? char + chars[Math.floor(Math.random()*chars.length)].repeat(Math.floor(Math.random()*5)+1) : char).join('');
+        }
+
+        // Boot + endless corruption
+        addLine('PS C:\\WINDOWS\\system32> INITIALIZING BREACH...');
+        setTimeout(() => addLine(zalgoCorrupt('**' + zalgoBase + ' H'), 'glitch'), 600);
+        setTimeout(() => addLine('Command not recognized...'), 1200);
+
+        let counter = 0;
+        setInterval(() => {
+            counter++;
+            if (counter % 3 === 0) {
+                addLine(zalgoCorrupt('PS C:\\WINDOWS\\system32> ' + zalgoBase.substring(0, 40 + Math.random()*30)), 'glitch');
+            } else {
+                addLine('Error: Dimension overflow detected.');
+            }
+        }, 450);
+
+        terminal.addEventListener('click', () => addLine(zalgoCorrupt('USER INPUT: HELL YEAH'), 'glitch'));
+    </script>
+</body>
+</html>

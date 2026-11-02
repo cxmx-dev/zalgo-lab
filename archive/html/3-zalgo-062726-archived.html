@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Zalgo Lab • Slight Edition</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; background:#0f0f0f; color:#ddd; padding:40px; max-width:820px; margin:auto; }
+  h1 { margin:0 0 4px 0; }
+  .subtitle { opacity:0.6; font-size:0.9em; }
+  textarea { width:100%; height:110px; font-size:1.1em; background:#1a1a1a; color:#eee; border:1px solid #333; padding:14px; box-sizing:border-box; resize:vertical; }
+  #preview { width:100%; min-height:110px; font-size:1.35em; line-height:1.35; background:#1a1a1a; border:1px solid #333; padding:16px; box-sizing:border-box; white-space:pre-wrap; word-break:break-word; }
+  .controls { margin:22px 0 12px; }
+  .presets, .reverse-modes { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  button.preset { background:#222; color:#ddd; border:1px solid #444; padding:6px 14px; border-radius:6px; cursor:pointer; }
+  button.preset:hover { background:#333; }
+  button.preset.active { background:#3b1f6e; border-color:#7c3aed; color:#f3e8ff; }
+  button.preset.terminal { border-color:#1a5c1a; color:#6ee76e; }
+  button.preset.terminal:hover { background:#0d2b0d; }
+  button.preset.terminal.active { background:#052805; border-color:#0f0; color:#0f0; box-shadow:0 0 10px rgba(0,255,80,0.25); }
+  button.preset.chaos { border-color:#854d0e; color:#fbbf24; }
+  button.preset.chaos:hover { background:#422006; }
+  #preview.terminal-active { border-color:#1a5c1a; box-shadow:0 0 10px rgba(0,255,80,0.12); }
+  #preview.raw-mode { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 1.1em; letter-spacing: 0.02em; }
+  .mode-label { font-size:0.85em; opacity:0.55; margin:14px 0 6px; }
+  .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:4px; }
+  button.action { background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:0.95em; }
+  button.action:hover { background:#1e40af; }
+  button.action.secondary { background:#1f2937; border:1px solid #444; }
+  button.action.secondary:hover { background:#374151; }
+  label { display:block; margin-bottom:6px; font-size:0.95em; }
+</style>
+</head>
+<body>
+  <h1>Zalgo Lab <span class="subtitle">slight edition</span></h1>
+  <p style="margin:6px 0 20px; opacity:0.7;">Add subtle glitch / corrupted text effects. Great for visuals, memes, and creative direction demos.</p>
+
+  <label>Input Text</label>
+  <textarea id="input" placeholder="type words here"></textarea>
+
+  <div class="controls">
+    <label>Intensity: <span id="val">3</span></label>
+    <input type="range" id="intensity" min="1" max="8" value="3" style="width:100%;">
+
+    <div class="presets">
+      <button class="preset" onclick="setIntensity(2)">Slight</button>
+      <button class="preset" onclick="setIntensity(4)">Medium</button>
+      <button class="preset" onclick="setIntensity(7)">Heavy</button>
+      <button class="preset" id="btn-reroll" onclick="reroll()">Re-roll</button>
+      <button class="preset terminal" id="btn-terminal" onclick="toggleTerminal()">Corrupted Terminal</button>
+      <button class="preset chaos" id="btn-slight-chaos" onclick="slightChaos()">Slight Chaos</button>
+      <button class="preset chaos" id="btn-quick-chaos" onclick="quickChaos()">Quick Chaos</button>
+    </div>
+
+    <div class="mode-label">Reverse modes</div>
+    <div class="reverse-modes">
+      <button class="preset" id="btn-char-back" onclick="toggleMode('charBack')">CHAR-BACK</button>
+      <button class="preset" id="btn-back-words" onclick="toggleMode('backWords')">BACK-WORDS</button>
+    </div>
+
+    <div class="mode-label">Layer mode <span style="opacity:0.7">(order of effects)</span></div>
+    <div class="reverse-modes" id="layer-modes">
+      <button class="preset active" id="layer-reverse-zalgo" onclick="setLayerMode('reverse-then-zalgo')">Reverse → Zalgo</button>
+      <button class="preset" id="layer-zalgo-reverse" onclick="setLayerMode('zalgo-then-reverse')">Zalgo → Reverse</button>
+      <button class="preset" id="layer-bleed" onclick="setLayerMode('bleed')" title="Extra marks on first/last 30% of string">Bleed</button>
+    </div>
+
+    <div class="mode-label">Output</div>
+    <div class="reverse-modes">
+      <button class="preset active" id="btn-preview-rendered" onclick="setPreviewMode(false)">Rendered</button>
+      <button class="preset" id="btn-preview-raw" onclick="setPreviewMode(true)">Raw</button>
+    </div>
+  </div>
+
+  <label>Preview</label>
+  <div id="preview"></div>
+
+  <div class="actions">
+    <button class="action" id="btn-copy" onclick="copyText()">Copy Zalgo Text</button>
+    <button class="action secondary" id="btn-copy-md" onclick="copyMarkdown()">Copy Markdown</button>
+    <button class="action secondary" id="btn-export" onclick="exportPng(false)">Export PNG</button>
+    <button class="action secondary" id="btn-export-fx" onclick="exportPng(true)">Export FX PNG</button>
+  </div>
+
+<script>
+const modes = { charBack: false, backWords: false };
+let terminalMode = false;
+let layerMode = 'reverse-then-zalgo';
+let previewRaw = false;
+let lastOutput = '';
+
+const TERMINAL_CHARS = '░▒▓█▀▄▌▐┌┐└┘├┤┬┴┼│─';
+
+function getMarks() {
+  const marks = [];
+  for (let i = 0x0300; i <= 0x036F; i++) marks.push(String.fromCharCode(i));
+  return marks;
+}
+
+const MIRROR = {
+  'a': 'ɐ', 'b': 'd', 'c': 'ɔ', 'd': 'b', 'e': 'ɘ', 'f': 'ɟ',
+  'g': 'ᵷ', 'h': 'ʜ', 'i': 'i', 'j': 'ꞁ', 'k': 'ʞ', 'l': 'l',
+  'm': 'ɯ', 'n': 'u', 'o': 'o', 'p': 'q', 'q': 'p', 'r': 'ɹ',
+  's': 's', 't': 'ʇ', 'u': 'n', 'v': 'ʌ', 'w': 'ʍ', 'x': 'x',
+  'y': 'ʎ', 'z': 'z',
+  'A': '∀', 'B': 'ꓭ', 'C': 'Ɔ', 'D': 'ꓷ', 'E': 'Ǝ', 'F': 'Ⅎ',
+  'G': 'פ', 'H': 'H', 'I': 'I', 'J': 'ſ', 'K': 'ʞ', 'L': '|',
+  'M': 'W', 'N': 'N', 'O': 'O', 'P': 'Ԁ', 'Q': 'Ό', 'R': 'ᴚ',
+  'S': 'S', 'T': '⊥', 'U': '∩', 'V': 'Λ', 'W': 'M', 'X': 'X',
+  'Y': '⅄', 'Z': 'Z',
+  '0': '0', '1': '⇂', '2': 'ς', '3': 'Ɛ', '4': 'ㄣ', '5': '߸',
+  '6': '9', '7': 'ㄥ', '8': '8', '9': '6',
+};
+
+function mirrorChar(char) {
+  return MIRROR[char] || char;
+}
+
+function charBack(text) {
+  return Array.from(text).reverse().map(mirrorChar).join('');
+}
+
+function backWords(text) {
+  const words = text.trim().split(/\s+/);
+  if (!words.length || (words.length === 1 && words[0] === '')) return text;
+  return words
+    .reverse()
+    .map(word => Array.from(word).reverse().join(''))
+    .join(' ');
+}
+
+function applyReverseModes(text) {
+  if (modes.charBack) return charBack(text);
+  if (modes.backWords) return backWords(text);
+  return text;
+}
+
+function toggleMode(mode) {
+  if (mode === 'charBack') {
+    modes.charBack = !modes.charBack;
+    if (modes.charBack) modes.backWords = false;
+  } else {
+    modes.backWords = !modes.backWords;
+    if (modes.backWords) modes.charBack = false;
+  }
+  syncModeButtons();
+  updatePreview();
+}
+
+function syncModeButtons() {
+  document.getElementById('btn-char-back').classList.toggle('active', modes.charBack);
+  document.getElementById('btn-back-words').classList.toggle('active', modes.backWords);
+}
+
+function makeZalgo(text, intensity) {
+  const marks = getMarks();
+  let out = '';
+  for (const char of text) {
+    out += char;
+    for (let i = 0; i < intensity; i++) {
+      out += marks[Math.floor(Math.random() * marks.length)];
+    }
+  }
+  return out;
+}
+
+function makeTerminalZalgo(text, intensity) {
+  const marks = getMarks();
+  const heavy = Math.max(intensity, 7);
+  let out = '';
+  let sinceBlock = 0;
+  let nextBlock = 4 + Math.floor(Math.random() * 5);
+
+  for (const char of text) {
+    out += char;
+    const markCount = heavy + (Math.random() < 0.4 ? 1 : 0);
+    for (let i = 0; i < markCount; i++) {
+      out += marks[Math.floor(Math.random() * marks.length)];
+    }
+    if (char.trim()) {
+      sinceBlock++;
+      if (sinceBlock >= nextBlock) {
+        out += TERMINAL_CHARS[Math.floor(Math.random() * TERMINAL_CHARS.length)];
+        sinceBlock = 0;
+        nextBlock = 4 + Math.floor(Math.random() * 5);
+      }
+    }
+  }
+  return out;
+}
+
+function toggleTerminal() {
+  terminalMode = !terminalMode;
+  if (terminalMode) {
+    document.getElementById('intensity').value = 7;
+  }
+  syncTerminalButton();
+  updatePreview();
+  if (terminalMode) flashButton('btn-terminal', 'BREACH ACTIVE');
+}
+
+function syncTerminalButton() {
+  document.getElementById('btn-terminal').classList.toggle('active', terminalMode);
+  document.getElementById('preview').classList.toggle('terminal-active', terminalMode);
+}
+
+function applyZalgo(text, intensity) {
+  return terminalMode ? makeTerminalZalgo(text, intensity) : makeZalgo(text, intensity);
+}
+
+function makeBleedZalgo(text, intensity) {
+  const chars = Array.from(text);
+  const len = chars.length;
+  const edgeLen = Math.max(1, Math.ceil(len * 0.3));
+  const marks = getMarks();
+  let out = '';
+  let sinceBlock = 0;
+  let nextBlock = 4 + Math.floor(Math.random() * 5);
+
+  for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
+    const inEdge = i < edgeLen || i >= len - edgeLen;
+    const markIntensity = inEdge ? Math.min(intensity + 2, 8) : intensity;
+
+    out += char;
+    let markCount = markIntensity;
+    if (terminalMode && inEdge) {
+      markCount = Math.max(markIntensity, 7) + (Math.random() < 0.4 ? 1 : 0);
+    }
+    for (let j = 0; j < markCount; j++) {
+      out += marks[Math.floor(Math.random() * marks.length)];
+    }
+    if (terminalMode && char.trim() && inEdge) {
+      sinceBlock++;
+      if (sinceBlock >= nextBlock) {
+        out += TERMINAL_CHARS[Math.floor(Math.random() * TERMINAL_CHARS.length)];
+        sinceBlock = 0;
+        nextBlock = 4 + Math.floor(Math.random() * 5);
+      }
+    }
+  }
+  return out;
+}
+
+function buildOutput(rawText, intensity) {
+  if (layerMode === 'zalgo-then-reverse') {
+    return applyReverseModes(applyZalgo(rawText, intensity));
+  }
+  if (layerMode === 'bleed') {
+    return makeBleedZalgo(applyReverseModes(rawText), intensity);
+  }
+  return applyZalgo(applyReverseModes(rawText), intensity);
+}
+
+function setLayerMode(mode) {
+  layerMode = mode;
+  syncLayerButtons();
+  updatePreview();
+}
+
+function syncLayerButtons() {
+  const map = {
+    'reverse-then-zalgo': 'layer-reverse-zalgo',
+    'zalgo-then-reverse': 'layer-zalgo-reverse',
+    'bleed': 'layer-bleed',
+  };
+  for (const [mode, id] of Object.entries(map)) {
+    document.getElementById(id).classList.toggle('active', layerMode === mode);
+  }
+}
+
+function getExportModeTag() {
+  const tags = [];
+  if (terminalMode) tags.push('terminal');
+  if (layerMode === 'bleed') tags.push('bleed');
+  else if (layerMode === 'zalgo-then-reverse') tags.push('zrev');
+  if (modes.charBack) tags.push('charback');
+  else if (modes.backWords) tags.push('backwords');
+  else if (!terminalMode && layerMode === 'reverse-then-zalgo') tags.push('forward');
+  return tags.join('-') || 'forward';
+}
+
+function getPreviewStyles() {
+  const preview = document.getElementById('preview');
+  const cs = getComputedStyle(preview);
+  return {
+    font: cs.font,
+    fontSize: parseFloat(cs.fontSize),
+    lineHeight: parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.35,
+    color: cs.color,
+    background: cs.backgroundColor,
+    padding: parseFloat(cs.paddingLeft) || 16,
+  };
+}
+
+function wrapCanvasLines(ctx, text, maxWidth) {
+  const lines = [];
+  for (const paragraph of text.split('\n')) {
+    let line = '';
+    for (const char of paragraph) {
+      const test = line + char;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = char;
+      } else {
+        line = test;
+      }
+    }
+    lines.push(line);
+  }
+  return lines.length ? lines : [''];
+}
+
+function drawCanvasText(ctx, lines, pad, startY, lineHeight, offsetX, color) {
+  ctx.fillStyle = color;
+  lines.forEach((line, i) => {
+    ctx.fillText(line, pad + offsetX, startY + i * lineHeight);
+  });
+}
+
+function applyScanlines(ctx, width, height) {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.14)';
+  for (let y = 0; y < height; y += 3) {
+    ctx.fillRect(0, y, width, 1);
+  }
+}
+
+function exportPng(fx) {
+  const text = document.getElementById('preview').innerText;
+  if (!text.trim()) return;
+
+  const styles = getPreviewStyles();
+  const pad = styles.padding;
+  const zalgoPad = Math.ceil(styles.fontSize * 0.9);
+  const maxWidth = document.getElementById('preview').clientWidth - pad * 2;
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.font = styles.font;
+
+  const lines = wrapCanvasLines(ctx, text, maxWidth);
+  const lineHeight = styles.lineHeight;
+  const textBlockHeight = lines.length * lineHeight;
+  const width = Math.max(document.getElementById('preview').clientWidth, 320);
+  const height = Math.ceil(textBlockHeight + pad * 2 + zalgoPad * 2);
+
+  canvas.width = width * 2;
+  canvas.height = height * 2;
+  ctx.scale(2, 2);
+
+  ctx.fillStyle = styles.background;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.textBaseline = 'alphabetic';
+  const startY = pad + zalgoPad + styles.fontSize * 0.85;
+
+  if (fx) {
+    drawCanvasText(ctx, lines, pad, startY, lineHeight, 2, 'rgba(255, 60, 60, 0.75)');
+    drawCanvasText(ctx, lines, pad, startY, lineHeight, 0, 'rgba(60, 255, 100, 0.55)');
+    drawCanvasText(ctx, lines, pad, startY, lineHeight, -2, 'rgba(60, 120, 255, 0.75)');
+    applyScanlines(ctx, width, height);
+  } else {
+    drawCanvasText(ctx, lines, pad, startY, lineHeight, 0, styles.color);
+  }
+
+  const intensity = document.getElementById('intensity').value;
+  const fxTag = fx ? '-fx' : '';
+  const filename = `zalgo-i${intensity}-${getExportModeTag()}${fxTag}-062726.png`;
+
+  canvas.toBlob(blob => {
+    if (!blob) {
+      alert('Export failed — canvas could not render.');
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    flashButton(fx ? 'btn-export-fx' : 'btn-export', fx ? 'FX Exported!' : 'Exported!');
+  }, 'image/png');
+}
+
+function flashButton(id, msg) {
+  const btn = document.getElementById(id);
+  const original = btn.textContent;
+  btn.textContent = msg;
+  setTimeout(() => { btn.textContent = original; }, 1400);
+}
+
+function renderPreview(output) {
+  lastOutput = output;
+  const preview = document.getElementById('preview');
+  if (previewRaw) {
+    preview.textContent = output;
+    preview.classList.add('raw-mode');
+  } else {
+    preview.innerHTML = output;
+    preview.classList.remove('raw-mode');
+  }
+}
+
+function setPreviewMode(raw) {
+  previewRaw = raw;
+  document.getElementById('btn-preview-rendered').classList.toggle('active', !raw);
+  document.getElementById('btn-preview-raw').classList.toggle('active', raw);
+  renderPreview(lastOutput || buildOutput(document.getElementById('input').value, parseInt(document.getElementById('intensity').value)));
+}
+
+function updatePreview() {
+  const rawText = document.getElementById('input').value;
+  const intensity = parseInt(document.getElementById('intensity').value);
+  document.getElementById('val').textContent = intensity;
+  renderPreview(buildOutput(rawText, intensity));
+}
+
+function setIntensity(level) {
+  document.getElementById('intensity').value = level;
+  updatePreview();
+}
+
+function reroll() {
+  updatePreview();
+  flashButton('btn-reroll', 'Rolled!');
+}
+
+function randInt(min, max) {
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+function slightChaos() {
+  const level = randInt(2, 5);
+  document.getElementById('intensity').value = level;
+  document.getElementById('val').textContent = level;
+  updatePreview();
+  flashButton('btn-slight-chaos', 'Chaos!');
+}
+
+function quickChaos() {
+  const level = randInt(2, 8);
+  document.getElementById('intensity').value = level;
+  document.getElementById('val').textContent = level;
+
+  if (Math.random() < 0.5) {
+    if (modes.charBack || modes.backWords) {
+      modes.charBack = false;
+      modes.backWords = false;
+    } else {
+      if (Math.random() < 0.5) {
+        modes.charBack = true;
+        modes.backWords = false;
+      } else {
+        modes.backWords = true;
+        modes.charBack = false;
+      }
+    }
+    syncModeButtons();
+  }
+
+  updatePreview();
+  flashButton('btn-quick-chaos', 'CHAOS!');
+}
+
+document.addEventListener('keydown', e => {
+  if (document.activeElement === document.getElementById('input')) return;
+  if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault();
+    reroll();
+  } else if (e.key === 'c' || e.key === 'C') {
+    e.preventDefault();
+    quickChaos();
+  }
+});
+
+function copyText() {
+  const text = document.getElementById('preview').innerText;
+  navigator.clipboard.writeText(text).then(() => flashButton('btn-copy', 'Copied!'));
+}
+
+function copyMarkdown() {
+  const text = document.getElementById('preview').innerText;
+  const md = '```\n' + text + '\n```';
+  navigator.clipboard.writeText(md).then(() => flashButton('btn-copy-md', 'Copied MD!'));
+}
+
+['input', 'intensity'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updatePreview);
+});
+
+updatePreview();
+</script>
+</body>
+</html>

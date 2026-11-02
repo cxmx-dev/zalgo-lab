@@ -1,0 +1,153 @@
+---
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Zalgo Lab</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0f0f0f;
+        color: #ddd;
+        max-width: 820px;
+        margin: 2rem auto;
+        padding: 0 1.5rem 2rem;
+      }
+      h1 { margin: 0 0 0.25rem; }
+      .sub { opacity: 0.6; font-size: 0.9rem; margin-bottom: 1.25rem; }
+      label { display: block; margin: 0.75rem 0 0.35rem; font-size: 0.95rem; }
+      textarea, #preview {
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 1.1em;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        padding: 14px;
+        color: #eee;
+      }
+      textarea { height: 100px; resize: vertical; }
+      #preview {
+        min-height: 100px;
+        font-size: 1.35em;
+        line-height: 1.35;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      input[type='range'] { width: 100%; }
+      .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0.75rem 0; }
+      button.toggle {
+        background: #222;
+        color: #ddd;
+        border: 1px solid #444;
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button.toggle.active {
+        background: #3b1f6e;
+        border-color: #7c3aed;
+        color: #f3e8ff;
+      }
+      a.back { color: #a78bfa; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <p><a class="back" href="/">← Zalgo</a></p>
+    <h1>Zalgo Lab</h1>
+    <p class="sub">Live preview — engine from the offline lab (index.html)</p>
+
+    <label for="input">Input text</label>
+    <textarea id="input" placeholder="type words here"></textarea>
+
+    <label for="intensity">Intensity: <span id="val">3</span></label>
+    <input type="range" id="intensity" min="1" max="8" value="3" />
+
+    <div class="row" id="reverse-modes">
+      <button type="button" class="toggle" id="btn-char-back">CHAR-BACK</button>
+      <button type="button" class="toggle" id="btn-back-words">BACK-WORDS</button>
+      <button type="button" class="toggle" id="btn-terminal">Terminal</button>
+    </div>
+
+    <div class="row" id="layer-modes">
+      <button type="button" class="toggle active" data-layer="reverse-then-zalgo">Reverse → Zalgo</button>
+      <button type="button" class="toggle" data-layer="zalgo-then-reverse">Zalgo → Reverse</button>
+      <button type="button" class="toggle" data-layer="bleed">Bleed</button>
+    </div>
+
+    <label for="preview">Preview</label>
+    <div id="preview"></div>
+
+    <script type="module">
+      import { buildOutput } from '../lib/zalgo-engine.mjs';
+
+      const input = document.getElementById('input');
+      const intensity = document.getElementById('intensity');
+      const val = document.getElementById('val');
+      const preview = document.getElementById('preview');
+
+      const state = {
+        charBack: false,
+        backWords: false,
+        terminal: false,
+        layerMode: 'reverse-then-zalgo',
+        bleedDecay: 0.3,
+      };
+
+      function syncButtons() {
+        document.getElementById('btn-char-back').classList.toggle('active', state.charBack);
+        document.getElementById('btn-back-words').classList.toggle('active', state.backWords);
+        document.getElementById('btn-terminal').classList.toggle('active', state.terminal);
+        document.querySelectorAll('#layer-modes [data-layer]').forEach((btn) => {
+          btn.classList.toggle('active', btn.dataset.layer === state.layerMode);
+        });
+      }
+
+      function updatePreview() {
+        const text = input.value;
+        const level = parseInt(intensity.value, 10);
+        val.textContent = String(level);
+        const out = buildOutput(text, level, {
+          charBack: state.charBack,
+          backWords: state.backWords,
+          terminal: state.terminal,
+          layerMode: state.layerMode,
+          bleedDecay: state.bleedDecay,
+        });
+        preview.textContent = out;
+      }
+
+      document.getElementById('btn-char-back').addEventListener('click', () => {
+        state.charBack = !state.charBack;
+        if (state.charBack) state.backWords = false;
+        syncButtons();
+        updatePreview();
+      });
+      document.getElementById('btn-back-words').addEventListener('click', () => {
+        state.backWords = !state.backWords;
+        if (state.backWords) state.charBack = false;
+        syncButtons();
+        updatePreview();
+      });
+      document.getElementById('btn-terminal').addEventListener('click', () => {
+        state.terminal = !state.terminal;
+        syncButtons();
+        updatePreview();
+      });
+      document.querySelectorAll('#layer-modes [data-layer]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.layerMode = btn.dataset.layer;
+          syncButtons();
+          updatePreview();
+        });
+      });
+
+      input.addEventListener('input', updatePreview);
+      intensity.addEventListener('input', updatePreview);
+      syncButtons();
+      updatePreview();
+    </script>
+  </body>
+</html>

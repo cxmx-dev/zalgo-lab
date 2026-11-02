@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZALGO TERMINAL BREACH - 9:16</title>
+    <style>
+        body { margin:0; background:#000; overflow:hidden; height:100vh; display:flex; align-items:center; justify-content:center; }
+        canvas { image-rendering: pixelated; box-shadow:0 0 30px #0f0; }
+    </style>
+</head>
+<body>
+    <canvas id="c" width="1080" height="1920"></canvas>
+
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let time = 0;
+
+        const zalgoChars = '̷̷̨̦̖̥͕̘̳̤̼̲͙̩̱͊̋̅̅ͫͫͨ̏̓͋͏̶̵̳̬̮̪͉̺̠̘̂͂ͬ͋͒͑͌̽͋͒̎͛̾̍̑͋͛͒͗͛̾̈́̾͑͗͛͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́̚͟';
+        const logoText = ']̷̨̦̖̥͕̘̳̤̼̲͙̩̱̋̅ͫͨ̏̓͋͝͏̶̳̬̮̪͉̺̠̘̂͂ͬ͋̚͟[] H_';
+
+        function randZalgo(len) {
+            let s = '';
+            for (let i = 0; i < len; i++) {
+                s += String.fromCharCode(32 + Math.random()*90) + zalgoChars[Math.floor(Math.random()*zalgoChars.length)].repeat(Math.random()*8|0);
+            }
+            return s;
+        }
+
+        function draw() {
+            time += 0.05;
+            ctx.fillStyle = 'rgba(0,20,0,0.15)';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+
+            // Background matrix rain
+            ctx.fillStyle = '#003300';
+            for (let i = 0; i < 40; i++) {
+                const x = (time*30 + i*37) % canvas.width;
+                ctx.fillText(randZalgo(3), x, (time*80 + i*80) % (canvas.height + 100) - 50);
+            }
+
+            // Terminal window
+            const termY = canvas.height * 0.45;
+            ctx.strokeStyle = '#0f0';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(80, termY, canvas.width-160, canvas.height*0.48);
+
+            ctx.fillStyle = '#001100';
+            ctx.fillRect(85, termY+5, canvas.width-170, canvas.height*0.47);
+
+            // Scrolling terminal text
+            ctx.font = '28px Courier New';
+            ctx.fillStyle = '#ff2222';
+            for (let i = 0; i < 12; i++) {
+                const y = termY + 60 + i*45 + Math.sin(time+i)*8;
+                ctx.fillText('CommandNotFoundException ' + randZalgo(6).slice(0,35), 120, y);
+            }
+
+            // Heavy Zalgo logo
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height*0.28);
+            ctx.rotate(Math.sin(time*1.5)*0.03);
+            ctx.font = 'bold 110px Courier New';
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#0f0';
+            ctx.shadowBlur = 60 + Math.sin(time*3)*20;
+            ctx.fillText(logoText, -ctx.measureText(logoText).width/2, 40);
+
+            // Extra corruption layers
+            ctx.fillStyle = 'rgba(255,0,0,0.6)';
+            ctx.fillText(randZalgo(logoText.length).slice(0, logoText.length), -ctx.measureText(logoText).width/2 + Math.random()*12-6, 40 + Math.random()*8-4);
+            ctx.restore();
+
+            // Asterisk sparks
+            ctx.font = '80px Courier New';
+            ctx.fillStyle = '#ffff00';
+            ctx.shadowBlur = 30;
+            ctx.fillText('**', 120, canvas.height*0.22 + Math.sin(time*5)*15);
+            ctx.fillText('**', canvas.width-280, canvas.height*0.22 + Math.cos(time*5)*15);
+
+            // Scanlines
+            ctx.fillStyle = 'rgba(0,255,80,0.08)';
+            for (let i = 0; i < canvas.height; i += 4) {
+                ctx.fillRect(0, i + time*20 % 4, canvas.width, 2);
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        canvas.addEventListener('click', () => {
+            ctx.fillStyle = 'rgba(255,50,50,0.4)';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+        });
+
+        draw();
+    </script>
+</body>
+</html>

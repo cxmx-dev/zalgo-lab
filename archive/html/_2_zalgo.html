@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zalgo Green Logo Animation</title>
+    <style>
+        body { background: #001a00; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: 'Courier New', monospace; }
+        .logo-container { position: relative; }
+        .logo { font-size: 4.5vw; color: #fff; text-shadow: 0 0 20px #0f0, 0 0 40px #0f0; animation: pulse 2s infinite, glitch 0.4s infinite; white-space: nowrap; }
+        .asterisks { position: absolute; left: -15%; top: 20%; font-size: 2.5vw; color: #0f0; text-shadow: 0 0 15px #0f0; animation: spark 1.5s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 0.9; } 50% { opacity: 1; } }
+        @keyframes glitch { 0% { transform: translate(0); } 20% { transform: translate(-3px, 3px); } 40% { transform: translate(-3px, -3px); } 60% { transform: translate(3px, 3px); } 80% { transform: translate(3px, -3px); } 100% { transform: translate(0); } }
+        .tendril { position: absolute; color: #0f0; font-size: 1.2vw; opacity: 0.6; animation: drip 3s linear infinite; }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <div class="asterisks">**</div>
+        <div class="logo">]̷̨̦̖̥͕̘̳̤̼̲͙̩̱̋̅ͫͨ̏̓͋͝͏̶̳̬̮̪͉̺̠̘̂͂ͬ͋̚͟[]̷̷̨̦̖̥͕̘̳̤̼̲͙̩̱͊̋̅̅ͫͫͨ̏̓͋͏̶̵̳̬̮̪͉̺̠̘̂͂ͬ͋͒͑͌̽͋͒̎͛̾̍̑͋͛͒͗͛̾̈́̾͑͗͛͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́͛͗̾͑͗͊͛͑͆̈́̚͟ H_</div>
+    </div>
+
+    <script>
+        const container = document.querySelector('.logo-container');
+        function createTendril() {
+            const t = document.createElement('div');
+            t.className = 'tendril';
+            t.textContent = '̷̷̨̦̖̥͕̘̳̤̼̲͙̩̱͊̋̅̅ͫͫͨ̏̓͋͏̶̳̬̮̪͉̺̠̘̂͂ͬ͋̚͟'.repeat(3);
+            t.style.left = Math.random() * 100 + '%';
+            t.style.top = '60%';
+            t.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 5000);
+        }
+        setInterval(createTendril, 180);
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "zalgo",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Zalgo Lab: offline index.html, Astro promos, CLI, and text garbler.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "open": "start index.html",
+    "test": "node scripts/test-logic.mjs && node scripts/verify-build.mjs && node scripts/capture-md-evidence.mjs",
+    "test:logic": "node scripts/test-logic.mjs",
+    "test:lab": "node scripts/verify-phase3.mjs",
+    "test:launch": "node scripts/launch-check.mjs preview",
+    "test:launch:dev": "node scripts/launch-check.mjs dev",
+    "scaffold:info": "node scripts/scaffold-info.mjs",
+    "astro": "astro",
+    "garble": "pwsh -File tools/text-garbler/garbler.ps1"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^7.0.0",
+    "astro": "^7.0.3"
+  },
+  "devDependencies": {
+    "playwright": "^1.52.0"
+  }
+}

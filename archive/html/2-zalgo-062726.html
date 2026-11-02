@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Zalgo Lab • Slight Edition</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; background:#0f0f0f; color:#ddd; padding:40px; max-width:800px; margin:auto; }
+  h1 { margin-bottom:8px; }
+  .subtitle { opacity:0.6; font-size:0.9em; }
+  textarea, #preview { width:100%; font-size:1.1em; background:#1a1a1a; color:#eee; border:1px solid #333; padding:16px; box-sizing:border-box; }
+  textarea { height:110px; resize:vertical; }
+  #preview { min-height:110px; white-space:pre-wrap; word-break:break-word; }
+  .controls { margin:20px 0; }
+  label { display:block; margin-bottom:6px; }
+  button { background:#2563eb; color:white; border:none; padding:10px 18px; border-radius:6px; cursor:pointer; }
+  button:hover { background:#1e40af; }
+</style>
+</head>
+<body>
+  <h1>Zalgo Lab <span class="subtitle">slight edition</span></h1>
+  <p style="margin-top:0; opacity:0.7;">Add subtle glitch / corrupted text effects. Great for visuals, memes, and creative direction demos.</p>
+
+  <label>Input Text</label>
+  <textarea id="input" placeholder="type words here"></textarea>
+
+  <div class="controls">
+    <label>Intensity: <span id="val">3</span></label>
+    <input type="range" id="intensity" min="1" max="8" value="3" style="width:100%;">
+  </div>
+
+  <label>Preview</label>
+  <div id="preview"></div>
+
+  <button onclick="copyText()">Copy Zalgo Text</button>
+
+<script>
+function makeZalgo(text, intensity) {
+  const marks = [];
+  for (let i = 0x0300; i <= 0x036F; i++) marks.push(String.fromCharCode(i));
+  let out = '';
+  for (let char of text) {
+    out += char;
+    for (let i = 0; i < intensity; i++) {
+      out += marks[Math.floor(Math.random() * marks.length)];
+    }
+  }
+  return out;
+}
+
+function updatePreview() {
+  const text = document.getElementById('input').value;
+  const intensity = parseInt(document.getElementById('intensity').value);
+  document.getElementById('val').textContent = intensity;
+  document.getElementById('preview').innerHTML = makeZalgo(text, intensity);
+}
+
+['input', 'intensity'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updatePreview);
+});
+
+function copyText() {
+  const text = document.getElementById('preview').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btns = document.querySelectorAll('button');
+    if (btns.length) btns[0].textContent = 'Copied!';
+    setTimeout(() => { if (btns.length) btns[0].textContent = 'Copy Zalgo Text'; }, 1200);
+  });
+}
+
+updatePreview();
+</script>
+</body>
+</html>

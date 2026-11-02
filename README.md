@@ -1,7 +1,17 @@
 # Zalgo Lab
 
-Offline single-file generator for glitchy "cursed" Zalgo text.
+Offline generator for glitchy Zalgo text.
 
 Play: https://cxmx-dev.github.io/zalgo-lab/
 
-Version history: 2026-10-25 initial release
+Open `index.html` in a browser. No install.
+
+Optional, after `npm install` (Node 22.12+): `npm run dev` serves the Astro pages. `python tools/zalgo.py "text"` prints one line.
+
+## Version History
+
+2026-11-02
+- Lab UI, Astro pages, CLI, and batch garbler.
+
+2026-10-25
+- Initial release.
